@@ -12,9 +12,7 @@ module.exports = async (req, res, next) => {
     }
 
     req.user = user;
-
-    console.log(req.user);
-
+    req.token = token;
     next();
   } catch (e) {
     res.status(401).send({ error: "must authenticate" });

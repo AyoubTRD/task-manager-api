@@ -41,10 +41,14 @@ const userSchema = new Schema({
   ]
 });
 
+userSchema.methods.toJSON = function() {
+  const { _doc: user } = this;
+  return { ...user, password: undefined, tokens: undefined };
+};
+
 userSchema.methods.generateAuthToken = async function() {
   const token = sign({ _id: this._id }, "auth");
   this.tokens = [...this.tokens, { token }];
-  await this.save();
   return token;
 };
 
@@ -60,17 +64,14 @@ userSchema.statics.logIn = async (email, password) => {
   return user;
 };
 
-userSchema.pre("save", async function(next) {
+userSchema.methods.hashPass = async function() {
   try {
-    if (this.__v === undefined) {
-      const passHash = await hash(this.password, 8);
-      this.password = passHash;
-    }
+    const passHash = await hash(this.password, 8);
+    this.password = passHash;
   } catch (err) {
     throw new Error("an error occured!");
   }
-  next();
-});
+};
 
 const User = model("user", userSchema);
 

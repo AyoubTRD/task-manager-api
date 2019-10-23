@@ -21,7 +21,7 @@ const cors = require("cors");
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json({ extended: true }));
+app.use(bodyParser.json());
 
 const taskRoutes = require("./routes/taskRoutes");
 const userRoutes = require("./routes/userRoutes");
