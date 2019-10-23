@@ -2,56 +2,68 @@ const { Router } = require("express"),
   router = Router();
 
 const Task = require("../models/Task");
+const auth = require("../middlewares/auth");
 
-router.get("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
-    const tasks = await Task.find({});
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  try {
-    const task = await Task.findById(req.params.id);
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.post("/", async (req, res) => {
-  try {
-    const task = await Task.create(req.body);
-    res.status(201).json(task);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-router.delete("/:id", async (req, res) => {
-  try {
-    const response = await Task.findByIdAndDelete(req.params.id);
-    res.json(response);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-router.put("/:id", async (req, res) => {
-  const updates = Object.keys(req.body);
-
-  try {
-    const task = await Task.findById(req.params.id);
-
-    updates.forEach(update => (task[update] = req.body[update]));
-
+    const task = new Task({ ...req.body, author: req.user._id });
     await task.save();
+    res.status(201).json(task);
+  } catch ({ message }) {
+    res.status(400).json({ error: message });
+  }
+});
 
+router.get("/", auth, async (req, res) => {
+  try {
+    await req.user.populate("tasks").execPopulate();
+    res.json(req.user.tasks);
+  } catch ({ message }) {
+    res.status(500).json({ error: message });
+  }
+});
+
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const task = await Task.findOne({
+      _id: req.params.id,
+      author: req.user._id
+    });
+    if (!task) {
+      return res.status(404).send();
+    }
     res.json(task);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch ({ message }) {
+    res.status(404).json({ error: message });
+  }
+});
+
+router.patch("/:id", auth, async (req, res) => {
+  try {
+    const updates = Object.keys(req.body);
+    const task = await Task.findOne({
+      _id: req.params.id,
+      author: req.user._id
+    });
+    updates.forEach(update => {
+      task[update] = req.body[update];
+    });
+    await task.save();
+    res.json(task);
+  } catch ({ message }) {
+    res.status(404).json({ error: message });
+  }
+});
+
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const task = await Task.findOneAndDelete({
+      _id: req.params.id,
+      author: req.user._id
+    });
+    res.send(task);
+  } catch ({ message }) {
+    res.status(404).send();
   }
 });
 
