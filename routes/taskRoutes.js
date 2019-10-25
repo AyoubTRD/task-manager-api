@@ -16,13 +16,22 @@ router.post("/", auth, async (req, res) => {
 
 router.get("/", auth, async (req, res) => {
   const match = {};
+  const order = { asc: 1, desc: -1 };
   if (req.query.completed) {
     match.completed = req.query.completed === "true";
   }
+  let sortProps = [];
   const options = {
     limit: parseInt(req.query.limit),
     skip: parseInt(req.query.skip)
   };
+  if (req.query.sortBy) {
+    sortProps = req.query.sortBy.split("-");
+    options.sort = {
+      [sortProps[0]]: order[sortProps[1]]
+    };
+  }
+  console.log(options.sort, sortProps);
   try {
     await req.user
       .populate({
