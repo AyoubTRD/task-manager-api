@@ -41,7 +41,10 @@ const userSchema = new Schema(
           required: true
         }
       }
-    ]
+    ],
+    avatar: {
+      type: Buffer
+    }
   },
   { timestamps: true }
 );
@@ -59,7 +62,7 @@ userSchema.virtual("tasks", {
 
 userSchema.methods.toJSON = function() {
   const { _doc: user } = this;
-  return { ...user, password: undefined, tokens: undefined };
+  return { ...user, password: undefined, tokens: undefined, avatar: undefined };
 };
 
 userSchema.methods.generateAuthToken = async function() {
